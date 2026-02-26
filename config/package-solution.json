@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "entity-webpart-client-side-solution",
+    "id": "c19f0f1e-5e28-48cd-aef6-a890e45e7a35",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.22.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "Entity Webpart description"
+      },
+      "longDescription": {
+        "default": "Entity Webpart description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "entity-webpart Feature",
+        "description": "The feature that activates elements of the entity-webpart solution.",
+        "id": "1e36dbe5-98d8-4caf-90e0-702d8ae15d03",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/entity-webpart.sppkg"
+  }
+}
