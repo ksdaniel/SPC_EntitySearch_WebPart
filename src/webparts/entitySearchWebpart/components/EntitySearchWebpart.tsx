@@ -6,7 +6,6 @@ import {
   Button,
   Badge,
   Text,
-  Divider,
 } from '@fluentui/react-components';
 import styles from './EntitySearchWebpart.module.scss';
 import type { IEntitySearchWebpartProps } from './IEntitySearchWebpartProps';
@@ -73,6 +72,10 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
         </div>
 
         <div className={styles.resultsList}>
+          <div className={styles.listHeader}>
+            <span>Name</span>
+            <span>Actions</span>
+          </div>
           {filtered.length === 0 ? (
             <div className={styles.noResults}>
               <Text size={300} className={styles.noResultsText}>
@@ -80,10 +83,9 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
               </Text>
             </div>
           ) : (
-            filtered.map((entity, index) => (
+            filtered.map((entity) => (
               <React.Fragment key={entity.id}>
-                {index > 0 && <Divider />}
-                <div className={styles.entityRow}>
+<div className={styles.entityRow}>
                   <div className={styles.entityInfo}>
                     <div className={styles.entityNameRow}>
                       <Text size={300} weight="semibold">{entity.name}</Text>
@@ -101,7 +103,7 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
                   </div>
 
                   <div className={styles.entityActions}>
-                    <Button size="small" appearance="outline">
+                    <Button size="small" appearance="subtle">
                       Signature Matrix
                     </Button>
                     <div
@@ -110,7 +112,7 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
                     >
                       <Button
                         size="small"
-                        appearance="outline"
+                        appearance="subtle"
                         onClick={() => setOpenMenuId(openMenuId === entity.id ? null : entity.id)}
                       >
                         Documents ▾
