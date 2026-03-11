@@ -22,7 +22,38 @@ export interface IEntitySearchWebpartWebPartProps {
   typeFieldInternalName: string;
   dealFieldInternalName: string;
   statusFieldInternalName: string;
+  actionsConfigurationJson: string;
 }
+
+const DEFAULT_ACTIONS_CONFIGURATION_JSON = JSON.stringify([
+  {
+    type: 'single',
+    label: 'Signature Matrix',
+    url: '/sites/Legal/SitePages/SignatureMatrix.aspx?entityId={{Id}}'
+  },
+  {
+    type: 'dropdown',
+    label: 'Documents',
+    items: [
+      {
+        label: 'Archive',
+        url: '/sites/Legal/Documents/Archive?entity={{Title}}'
+      },
+      {
+        label: 'Board Minutes',
+        url: '/sites/Legal/Documents/BoardMinutes?entity={{Title}}'
+      },
+      {
+        label: 'State Documents',
+        url: '/sites/Legal/Documents/State?entity={{Title}}'
+      },
+      {
+        label: 'Tax & Accounting',
+        url: '/sites/Legal/Documents/Tax?entity={{Title}}'
+      }
+    ]
+  }
+], null, 2);
 
 export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IEntitySearchWebpartWebPartProps> {
 
@@ -43,6 +74,7 @@ export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IE
         typeFieldInternalName: this.properties.typeFieldInternalName,
         dealFieldInternalName: this.properties.dealFieldInternalName,
         statusFieldInternalName: this.properties.statusFieldInternalName,
+        actionsConfigurationJson: this.properties.actionsConfigurationJson,
         spHttpClient: this.context.spHttpClient,
         siteUrl: this.context.pageContext.web.absoluteUrl,
         isDarkTheme: this._isDarkTheme,
@@ -186,6 +218,13 @@ export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IE
                   options: this._fieldOptions,
                   disabled: this._isLoadingFields || !this.properties.listId,
                   selectedKey: this.properties.statusFieldInternalName
+                }),
+                PropertyPaneTextField('actionsConfigurationJson', {
+                  label: strings.ActionsConfigurationFieldLabel,
+                  description: strings.ActionsConfigurationFieldDescription,
+                  multiline: true,
+                  rows: 12,
+                  value: this.properties.actionsConfigurationJson
                 })
               ]
             }
@@ -200,6 +239,7 @@ export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IE
     this.properties.typeFieldInternalName = this.properties.typeFieldInternalName || 'EntityType';
     this.properties.dealFieldInternalName = this.properties.dealFieldInternalName || 'Deal';
     this.properties.statusFieldInternalName = this.properties.statusFieldInternalName || 'Status';
+    this.properties.actionsConfigurationJson = this.properties.actionsConfigurationJson || DEFAULT_ACTIONS_CONFIGURATION_JSON;
   }
 
   private _resetFieldMappings(): void {

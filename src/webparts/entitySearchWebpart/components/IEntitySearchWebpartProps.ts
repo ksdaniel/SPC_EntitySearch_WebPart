@@ -7,6 +7,7 @@ export interface IEntitySearchWebpartProps {
   typeFieldInternalName: string;
   dealFieldInternalName: string;
   statusFieldInternalName: string;
+  actionsConfigurationJson: string;
   spHttpClient: SPHttpClient;
   siteUrl: string;
   isDarkTheme: boolean;

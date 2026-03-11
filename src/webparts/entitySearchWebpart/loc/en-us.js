@@ -8,6 +8,8 @@ define([], function() {
     "TypeMappingFieldLabel": "Type field mapping",
     "DealMappingFieldLabel": "Deal field mapping",
     "StatusMappingFieldLabel": "Status field mapping",
+    "ActionsConfigurationFieldLabel": "Actions JSON configuration",
+    "ActionsConfigurationFieldDescription": "Define row actions using JSON. Use tokens like {{Id}} or {{Title}} in URLs.",
     "AppLocalEnvironmentSharePoint": "The app is running on your local environment as SharePoint web part",
     "AppLocalEnvironmentTeams": "The app is running on your local environment as Microsoft Teams app",
     "AppLocalEnvironmentOffice": "The app is running on your local environment in office.com",

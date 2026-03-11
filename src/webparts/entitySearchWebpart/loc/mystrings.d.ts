@@ -7,6 +7,8 @@ declare interface IEntitySearchWebpartWebPartStrings {
   TypeMappingFieldLabel: string;
   DealMappingFieldLabel: string;
   StatusMappingFieldLabel: string;
+  ActionsConfigurationFieldLabel: string;
+  ActionsConfigurationFieldDescription: string;
   AppLocalEnvironmentSharePoint: string;
   AppLocalEnvironmentTeams: string;
   AppLocalEnvironmentOffice: string;
