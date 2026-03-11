@@ -3,10 +3,10 @@ import { SPHttpClient } from '@microsoft/sp-http';
 export interface IEntitySearchWebpartProps {
   description: string;
   listId: string;
-  titleFieldInternalName: string;
-  typeFieldInternalName: string;
-  dealFieldInternalName: string;
-  statusFieldInternalName: string;
+  primaryFieldInternalName: string;
+  secondaryFieldInternalName: string;
+  tertiaryFieldInternalName: string;
+  badgeFieldInternalName: string;
   actionsConfigurationJson: string;
   spHttpClient: SPHttpClient;
   siteUrl: string;

@@ -13,10 +13,10 @@ import type { IEntitySearchWebpartProps } from './IEntitySearchWebpartProps';
 
 interface IEntity {
   id: number;
-  name: string;
-  type: string;
-  deal: string;
-  status: string;
+  primaryText: string;
+  secondaryText: string;
+  tertiaryText: string;
+  badgeText: string;
   fields: Record<string, string>;
 }
 
@@ -65,13 +65,13 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
     const loadEntities = async (): Promise<void> => {
       if (!props.listId) {
         setEntities([]);
-        setError('Select a list in the web part settings to start searching entities.');
+        setError('Select a list in the web part settings to load items.');
         return;
       }
 
-      if (!props.titleFieldInternalName) {
+      if (!props.primaryFieldInternalName) {
         setEntities([]);
-        setError('Map the title field in the web part settings.');
+        setError('Map the primary text field in the web part settings.');
         return;
       }
 
@@ -81,10 +81,10 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
       try {
         const fieldsToSelect = [
           'Id',
-          props.titleFieldInternalName,
-          props.typeFieldInternalName,
-          props.dealFieldInternalName,
-          props.statusFieldInternalName,
+          props.primaryFieldInternalName,
+          props.secondaryFieldInternalName,
+          props.tertiaryFieldInternalName,
+          props.badgeFieldInternalName,
           ...configuredActionFields
         ]
           .filter((value, index, self) => !!value && self.indexOf(value) === index)
@@ -94,16 +94,16 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
         const response = await props.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
 
         if (!response.ok) {
-          throw new Error(`Failed to load entities: ${response.statusText}`);
+          throw new Error(`Failed to load items: ${response.statusText}`);
         }
 
         const data = await response.json() as { value: Array<Record<string, unknown>> };
         const mappedEntities = data.value.map((item) => ({
           id: Number(item.Id),
-          name: readFieldValue(item, props.titleFieldInternalName),
-          type: readFieldValue(item, props.typeFieldInternalName),
-          deal: readFieldValue(item, props.dealFieldInternalName),
-          status: readFieldValue(item, props.statusFieldInternalName),
+          primaryText: readFieldValue(item, props.primaryFieldInternalName),
+          secondaryText: readFieldValue(item, props.secondaryFieldInternalName),
+          tertiaryText: readFieldValue(item, props.tertiaryFieldInternalName),
+          badgeText: readFieldValue(item, props.badgeFieldInternalName),
           fields: mapItemFields(item)
         }));
 
@@ -113,7 +113,7 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
       } catch (loadError) {
         if (isActive) {
           setEntities([]);
-          setError('Unable to load entities. Verify list and field mappings in web part settings.');
+          setError('Unable to load items. Verify list and field mappings in web part settings.');
         }
         console.error('EntitySearchWebPart: failed to load entities.', loadError);
       } finally {
@@ -132,10 +132,10 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
     };
   }, [
     props.listId,
-    props.titleFieldInternalName,
-    props.typeFieldInternalName,
-    props.dealFieldInternalName,
-    props.statusFieldInternalName,
+    props.primaryFieldInternalName,
+    props.secondaryFieldInternalName,
+    props.tertiaryFieldInternalName,
+    props.badgeFieldInternalName,
     configuredActionFields,
     props.siteUrl,
     props.spHttpClient
@@ -144,9 +144,9 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const filtered = entities.filter(e =>
-    e.name.toLowerCase().includes(normalizedQuery) ||
-    e.type.toLowerCase().includes(normalizedQuery) ||
-    e.deal.toLowerCase().includes(normalizedQuery)
+    e.primaryText.toLowerCase().includes(normalizedQuery) ||
+    e.secondaryText.toLowerCase().includes(normalizedQuery) ||
+    e.tertiaryText.toLowerCase().includes(normalizedQuery)
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / DEFAULT_PAGE_SIZE));
@@ -184,16 +184,16 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
 
         <div className={styles.header}>
           <Text as="h2" size={500} weight="semibold" className={styles.title}>
-            Entity Search
+            Item Search
           </Text>
           <Text size={200} className={styles.subtitle}>
-            Search and access documents for your entities
+            Search and open related resources for your items
           </Text>
         </div>
 
         <div className={styles.searchWrapper}>
           <SearchBox
-            placeholder="Search by name, type, or state..."
+            placeholder="Search by primary, secondary, or tertiary text..."
             value={searchQuery}
             onChange={(_, data) => {
               setSearchQuery(data.value);
@@ -206,7 +206,7 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
 
         <div className={styles.resultsHeader}>
           <Text size={200} className={styles.resultsCount}>
-            {isLoading ? 'Loading entities...' : `${filtered.length} ${filtered.length === 1 ? 'entity' : 'entities'} found`}
+            {isLoading ? 'Loading items...' : `${filtered.length} ${filtered.length === 1 ? 'item' : 'items'} found`}
           </Text>
         </div>
 
@@ -230,7 +230,7 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
           ) : !isLoading && filtered.length === 0 ? (
             <div className={styles.noResults}>
               <Text size={300} className={styles.noResultsText}>
-                No entities match &ldquo;{searchQuery}&rdquo;
+                No items match &ldquo;{searchQuery}&rdquo;
               </Text>
             </div>
           ) : (
@@ -239,17 +239,17 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
                 <div className={styles.entityRow}>
                   <div className={styles.entityInfo}>
                     <div className={styles.entityNameRow}>
-                      <Text size={300} weight="semibold">{entity.name}</Text>
+                      <Text size={300} weight="semibold">{entity.primaryText}</Text>
                       <Badge
                         appearance="filled"
-                        color={entity.status.toLowerCase() === 'active' ? 'success' : 'subtle'}
+                        color={entity.badgeText.toLowerCase() === 'active' ? 'success' : 'subtle'}
                         size="small"
                       >
-                        {entity.status || 'Unknown'}
+                        {entity.badgeText || 'Unknown'}
                       </Badge>
                     </div>
                     <Text size={200} className={styles.entityMeta}>
-                      {entity.type}&nbsp;&middot;&nbsp;{entity.deal}
+                      {entity.secondaryText}&nbsp;&middot;&nbsp;{entity.tertiaryText}
                     </Text>
                   </div>
 

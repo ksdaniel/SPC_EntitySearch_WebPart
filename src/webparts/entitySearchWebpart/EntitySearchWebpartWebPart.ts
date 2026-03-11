@@ -18,38 +18,44 @@ import { IEntitySearchWebpartProps } from './components/IEntitySearchWebpartProp
 export interface IEntitySearchWebpartWebPartProps {
   description: string;
   listId: string;
-  titleFieldInternalName: string;
-  typeFieldInternalName: string;
-  dealFieldInternalName: string;
-  statusFieldInternalName: string;
+  primaryFieldInternalName: string;
+  secondaryFieldInternalName: string;
+  tertiaryFieldInternalName: string;
+  badgeFieldInternalName: string;
   actionsConfigurationJson: string;
+
+  // Backward compatibility for previously saved properties
+  titleFieldInternalName?: string;
+  typeFieldInternalName?: string;
+  dealFieldInternalName?: string;
+  statusFieldInternalName?: string;
 }
 
 const DEFAULT_ACTIONS_CONFIGURATION_JSON = JSON.stringify([
   {
     type: 'single',
-    label: 'Signature Matrix',
-    url: '/sites/Legal/SitePages/SignatureMatrix.aspx?entityId={{Id}}'
+    label: 'Open Details',
+    url: '/SitePages/Details.aspx?itemId={{Id}}'
   },
   {
     type: 'dropdown',
-    label: 'Documents',
+    label: 'Open Links',
     items: [
       {
-        label: 'Archive',
-        url: '/sites/Legal/Documents/Archive?entity={{Title}}'
+        label: 'Profile',
+        url: '/SitePages/Profile.aspx?title={{Title}}'
       },
       {
-        label: 'Board Minutes',
-        url: '/sites/Legal/Documents/BoardMinutes?entity={{Title}}'
+        label: 'History',
+        url: '/SitePages/History.aspx?title={{Title}}'
       },
       {
-        label: 'State Documents',
-        url: '/sites/Legal/Documents/State?entity={{Title}}'
+        label: 'Documents',
+        url: '/Shared Documents/Forms/AllItems.aspx?FilterField1=Title&FilterValue1={{Title}}'
       },
       {
-        label: 'Tax & Accounting',
-        url: '/sites/Legal/Documents/Tax?entity={{Title}}'
+        label: 'Related',
+        url: '/SitePages/Related.aspx?id={{Id}}'
       }
     ]
   }
@@ -70,10 +76,10 @@ export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IE
       {
         description: this.properties.description,
         listId: this.properties.listId,
-        titleFieldInternalName: this.properties.titleFieldInternalName,
-        typeFieldInternalName: this.properties.typeFieldInternalName,
-        dealFieldInternalName: this.properties.dealFieldInternalName,
-        statusFieldInternalName: this.properties.statusFieldInternalName,
+        primaryFieldInternalName: this.properties.primaryFieldInternalName,
+        secondaryFieldInternalName: this.properties.secondaryFieldInternalName,
+        tertiaryFieldInternalName: this.properties.tertiaryFieldInternalName,
+        badgeFieldInternalName: this.properties.badgeFieldInternalName,
         actionsConfigurationJson: this.properties.actionsConfigurationJson,
         spHttpClient: this.context.spHttpClient,
         siteUrl: this.context.pageContext.web.absoluteUrl,
@@ -195,29 +201,29 @@ export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IE
                   disabled: this._isLoadingLists,
                   selectedKey: this.properties.listId
                 }),
-                PropertyPaneDropdown('titleFieldInternalName', {
-                  label: strings.TitleMappingFieldLabel,
+                PropertyPaneDropdown('primaryFieldInternalName', {
+                  label: strings.PrimaryMappingFieldLabel,
                   options: this._fieldOptions,
                   disabled: this._isLoadingFields || !this.properties.listId,
-                  selectedKey: this.properties.titleFieldInternalName
+                  selectedKey: this.properties.primaryFieldInternalName
                 }),
-                PropertyPaneDropdown('typeFieldInternalName', {
-                  label: strings.TypeMappingFieldLabel,
+                PropertyPaneDropdown('secondaryFieldInternalName', {
+                  label: strings.SecondaryMappingFieldLabel,
                   options: this._fieldOptions,
                   disabled: this._isLoadingFields || !this.properties.listId,
-                  selectedKey: this.properties.typeFieldInternalName
+                  selectedKey: this.properties.secondaryFieldInternalName
                 }),
-                PropertyPaneDropdown('dealFieldInternalName', {
-                  label: strings.DealMappingFieldLabel,
+                PropertyPaneDropdown('tertiaryFieldInternalName', {
+                  label: strings.TertiaryMappingFieldLabel,
                   options: this._fieldOptions,
                   disabled: this._isLoadingFields || !this.properties.listId,
-                  selectedKey: this.properties.dealFieldInternalName
+                  selectedKey: this.properties.tertiaryFieldInternalName
                 }),
-                PropertyPaneDropdown('statusFieldInternalName', {
-                  label: strings.StatusMappingFieldLabel,
+                PropertyPaneDropdown('badgeFieldInternalName', {
+                  label: strings.BadgeMappingFieldLabel,
                   options: this._fieldOptions,
                   disabled: this._isLoadingFields || !this.properties.listId,
-                  selectedKey: this.properties.statusFieldInternalName
+                  selectedKey: this.properties.badgeFieldInternalName
                 }),
                 PropertyPaneTextField('actionsConfigurationJson', {
                   label: strings.ActionsConfigurationFieldLabel,
@@ -235,18 +241,18 @@ export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IE
   }
 
   private _ensureDefaultFieldMappings(): void {
-    this.properties.titleFieldInternalName = this.properties.titleFieldInternalName || 'Title';
-    this.properties.typeFieldInternalName = this.properties.typeFieldInternalName || 'EntityType';
-    this.properties.dealFieldInternalName = this.properties.dealFieldInternalName || 'Deal';
-    this.properties.statusFieldInternalName = this.properties.statusFieldInternalName || 'Status';
+    this.properties.primaryFieldInternalName = this.properties.primaryFieldInternalName || this.properties.titleFieldInternalName || 'Title';
+    this.properties.secondaryFieldInternalName = this.properties.secondaryFieldInternalName || this.properties.typeFieldInternalName || 'Type';
+    this.properties.tertiaryFieldInternalName = this.properties.tertiaryFieldInternalName || this.properties.dealFieldInternalName || '';
+    this.properties.badgeFieldInternalName = this.properties.badgeFieldInternalName || this.properties.statusFieldInternalName || 'Status';
     this.properties.actionsConfigurationJson = this.properties.actionsConfigurationJson || DEFAULT_ACTIONS_CONFIGURATION_JSON;
   }
 
   private _resetFieldMappings(): void {
-    this.properties.titleFieldInternalName = '';
-    this.properties.typeFieldInternalName = '';
-    this.properties.dealFieldInternalName = '';
-    this.properties.statusFieldInternalName = '';
+    this.properties.primaryFieldInternalName = '';
+    this.properties.secondaryFieldInternalName = '';
+    this.properties.tertiaryFieldInternalName = '';
+    this.properties.badgeFieldInternalName = '';
   }
 
   private async _loadListOptions(): Promise<void> {
@@ -308,23 +314,23 @@ export default class EntitySearchWebpartWebPart extends BaseClientSideWebPart<IE
   private _applyDefaultFieldMappingsFromOptions(): void {
     const availableKeys = new Set(this._fieldOptions.map(option => String(option.key)));
 
-    this.properties.titleFieldInternalName = this._chooseFieldMapping(
-      this.properties.titleFieldInternalName,
+    this.properties.primaryFieldInternalName = this._chooseFieldMapping(
+      this.properties.primaryFieldInternalName,
       ['Title'],
       availableKeys
     );
-    this.properties.typeFieldInternalName = this._chooseFieldMapping(
-      this.properties.typeFieldInternalName,
-      ['EntityType', 'Type'],
+    this.properties.secondaryFieldInternalName = this._chooseFieldMapping(
+      this.properties.secondaryFieldInternalName,
+      ['Type', 'Category'],
       availableKeys
     );
-    this.properties.dealFieldInternalName = this._chooseFieldMapping(
-      this.properties.dealFieldInternalName,
-      ['Deal'],
+    this.properties.tertiaryFieldInternalName = this._chooseFieldMapping(
+      this.properties.tertiaryFieldInternalName,
+      ['SubCategory'],
       availableKeys
     );
-    this.properties.statusFieldInternalName = this._chooseFieldMapping(
-      this.properties.statusFieldInternalName,
+    this.properties.badgeFieldInternalName = this._chooseFieldMapping(
+      this.properties.badgeFieldInternalName,
       ['Status'],
       availableKeys
     );

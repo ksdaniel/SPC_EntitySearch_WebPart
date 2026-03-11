@@ -3,10 +3,10 @@ declare interface IEntitySearchWebpartWebPartStrings {
   BasicGroupName: string;
   DescriptionFieldLabel: string;
   ListFieldLabel: string;
-  TitleMappingFieldLabel: string;
-  TypeMappingFieldLabel: string;
-  DealMappingFieldLabel: string;
-  StatusMappingFieldLabel: string;
+  PrimaryMappingFieldLabel: string;
+  SecondaryMappingFieldLabel: string;
+  TertiaryMappingFieldLabel: string;
+  BadgeMappingFieldLabel: string;
   ActionsConfigurationFieldLabel: string;
   ActionsConfigurationFieldDescription: string;
   AppLocalEnvironmentSharePoint: string;
