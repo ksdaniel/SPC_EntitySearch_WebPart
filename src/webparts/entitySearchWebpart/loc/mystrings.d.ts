@@ -2,6 +2,11 @@ declare interface IEntitySearchWebpartWebPartStrings {
   PropertyPaneDescription: string;
   BasicGroupName: string;
   DescriptionFieldLabel: string;
+  ListFieldLabel: string;
+  TitleMappingFieldLabel: string;
+  TypeMappingFieldLabel: string;
+  DealMappingFieldLabel: string;
+  StatusMappingFieldLabel: string;
   AppLocalEnvironmentSharePoint: string;
   AppLocalEnvironmentTeams: string;
   AppLocalEnvironmentOffice: string;

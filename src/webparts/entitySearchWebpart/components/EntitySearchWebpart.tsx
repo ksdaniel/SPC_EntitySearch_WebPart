@@ -7,6 +7,7 @@ import {
   Badge,
   Text,
 } from '@fluentui/react-components';
+import { SPHttpClient } from '@microsoft/sp-http';
 import styles from './EntitySearchWebpart.module.scss';
 import type { IEntitySearchWebpartProps } from './IEntitySearchWebpartProps';
 
@@ -14,22 +15,91 @@ interface IEntity {
   id: number;
   name: string;
   type: string;
-  deal  : string;
-  status: 'Active' | 'Inactive';
+  deal: string;
+  status: string;
 }
-
-const SAMPLE_ENTITIES: IEntity[] = [
-  { id: 1, name: 'Acme Holdings LLC',           type: 'LLC',         deal: 'Deal 1', status: 'Active'   },
-  { id: 2, name: 'Acme Company', type: 'Partnership', deal: 'Deal 2', status: 'Active'   },
-];
 
 const MENU_ITEMS = ['Archive', 'Board Minutes', 'State Documents', 'Tax & Accounting'];
 
-const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
+const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [openMenuId, setOpenMenuId] = React.useState<number | null>(null);
+  const [entities, setEntities] = React.useState<IEntity[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string>('');
 
-  const filtered = SAMPLE_ENTITIES.filter(e =>
+  React.useEffect(() => {
+    let isActive = true;
+
+    const loadEntities = async (): Promise<void> => {
+      if (!props.listId) {
+        setEntities([]);
+        setError('Select a list in the web part settings to start searching entities.');
+        return;
+      }
+
+      if (!props.titleFieldInternalName) {
+        setEntities([]);
+        setError('Map the title field in the web part settings.');
+        return;
+      }
+
+      setIsLoading(true);
+      setError('');
+
+      try {
+        const fieldsToSelect = ['Id', props.titleFieldInternalName, props.typeFieldInternalName, props.dealFieldInternalName, props.statusFieldInternalName]
+          .filter((value, index, self) => !!value && self.indexOf(value) === index)
+          .join(',');
+
+        const endpoint = `${props.siteUrl}/_api/web/lists(guid'${props.listId}')/items?$select=${fieldsToSelect}&$top=200`;
+        const response = await props.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+
+        if (!response.ok) {
+          throw new Error(`Failed to load entities: ${response.statusText}`);
+        }
+
+        const data = await response.json() as { value: Array<Record<string, unknown>> };
+        const mappedEntities = data.value.map((item) => ({
+          id: Number(item.Id),
+          name: readFieldValue(item, props.titleFieldInternalName),
+          type: readFieldValue(item, props.typeFieldInternalName),
+          deal: readFieldValue(item, props.dealFieldInternalName),
+          status: readFieldValue(item, props.statusFieldInternalName)
+        }));
+
+        if (isActive) {
+          setEntities(mappedEntities);
+        }
+      } catch (loadError) {
+        if (isActive) {
+          setEntities([]);
+          setError('Unable to load entities. Verify list and field mappings in web part settings.');
+        }
+        console.error('EntitySearchWebPart: failed to load entities.', loadError);
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadEntities();
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    props.listId,
+    props.titleFieldInternalName,
+    props.typeFieldInternalName,
+    props.dealFieldInternalName,
+    props.statusFieldInternalName,
+    props.siteUrl,
+    props.spHttpClient
+  ]);
+
+  const filtered = entities.filter(e =>
     e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
     e.deal.toLowerCase().includes(searchQuery.toLowerCase())
@@ -67,7 +137,7 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
 
         <div className={styles.resultsHeader}>
           <Text size={200} className={styles.resultsCount}>
-            {filtered.length} {filtered.length === 1 ? 'entity' : 'entities'} found
+            {isLoading ? 'Loading entities...' : `${filtered.length} ${filtered.length === 1 ? 'entity' : 'entities'} found`}
           </Text>
         </div>
 
@@ -76,7 +146,13 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
             <span>Name</span>
             <span>Actions</span>
           </div>
-          {filtered.length === 0 ? (
+          {error ? (
+            <div className={styles.noResults}>
+              <Text size={300} className={styles.noResultsText}>
+                {error}
+              </Text>
+            </div>
+          ) : !isLoading && filtered.length === 0 ? (
             <div className={styles.noResults}>
               <Text size={300} className={styles.noResultsText}>
                 No entities match &ldquo;{searchQuery}&rdquo;
@@ -91,10 +167,10 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
                       <Text size={300} weight="semibold">{entity.name}</Text>
                       <Badge
                         appearance="filled"
-                        color={entity.status === 'Active' ? 'success' : 'subtle'}
+                        color={entity.status.toLowerCase() === 'active' ? 'success' : 'subtle'}
                         size="small"
                       >
-                        {entity.status}
+                        {entity.status || 'Unknown'}
                       </Badge>
                     </div>
                     <Text size={200} className={styles.entityMeta}>
@@ -142,5 +218,27 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = () => {
     </FluentProvider>
   );
 };
+
+function readFieldValue(item: Record<string, unknown>, fieldInternalName: string): string {
+  if (!fieldInternalName) {
+    return '';
+  }
+
+  const rawValue = item[fieldInternalName];
+  if (rawValue === null || rawValue === undefined) {
+    return '';
+  }
+
+  if (typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean') {
+    return String(rawValue);
+  }
+
+  if (typeof rawValue === 'object') {
+    const valueObject = rawValue as { Title?: string; LookupValue?: string; Label?: string; Value?: string };
+    return valueObject.LookupValue || valueObject.Title || valueObject.Label || valueObject.Value || '';
+  }
+
+  return '';
+}
 
 export default EntitySearchWebpart;
