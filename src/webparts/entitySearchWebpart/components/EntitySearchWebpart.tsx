@@ -20,10 +20,12 @@ interface IEntity {
 }
 
 const MENU_ITEMS = ['Archive', 'Board Minutes', 'State Documents', 'Tax & Accounting'];
+const DEFAULT_PAGE_SIZE = 5;
 
 const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [openMenuId, setOpenMenuId] = React.useState<number | null>(null);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [entities, setEntities] = React.useState<IEntity[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>('');
@@ -84,7 +86,9 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
       }
     };
 
-    void loadEntities();
+    loadEntities().catch((loadError) => {
+      console.error('EntitySearchWebPart: failed to initialize entity load.', loadError);
+    });
 
     return () => {
       isActive = false;
@@ -99,11 +103,26 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
     props.spHttpClient
   ]);
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
   const filtered = entities.filter(e =>
-    e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.deal.toLowerCase().includes(searchQuery.toLowerCase())
+    e.name.toLowerCase().includes(normalizedQuery) ||
+    e.type.toLowerCase().includes(normalizedQuery) ||
+    e.deal.toLowerCase().includes(normalizedQuery)
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / DEFAULT_PAGE_SIZE));
+
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const pageStartIndex = (currentPage - 1) * DEFAULT_PAGE_SIZE;
+  const pagedEntities = filtered.slice(pageStartIndex, pageStartIndex + DEFAULT_PAGE_SIZE);
+  const pageStartNumber = filtered.length > 0 ? pageStartIndex + 1 : 0;
+  const pageEndNumber = pageStartIndex + pagedEntities.length;
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -129,7 +148,10 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
           <SearchBox
             placeholder="Search by name, type, or state..."
             value={searchQuery}
-            onChange={(_, data) => setSearchQuery(data.value)}
+            onChange={(_, data) => {
+              setSearchQuery(data.value);
+              setCurrentPage(1);
+            }}
             size="medium"
             style={{ width: '100%' }}
           />
@@ -159,9 +181,9 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
               </Text>
             </div>
           ) : (
-            filtered.map((entity) => (
+            pagedEntities.map((entity) => (
               <React.Fragment key={entity.id}>
-<div className={styles.entityRow}>
+                <div className={styles.entityRow}>
                   <div className={styles.entityInfo}>
                     <div className={styles.entityNameRow}>
                       <Text size={300} weight="semibold">{entity.name}</Text>
@@ -211,6 +233,35 @@ const EntitySearchWebpart: React.FC<IEntitySearchWebpartProps> = (props) => {
                 </div>
               </React.Fragment>
             ))
+          )}
+
+          {!error && !isLoading && filtered.length > 0 && (
+            <div className={styles.paginationBar}>
+              <Text size={200} className={styles.paginationInfo}>
+                Showing {pageStartNumber}-{pageEndNumber} of {filtered.length}
+              </Text>
+              <div className={styles.paginationButtons}>
+                <Button
+                  size="small"
+                  appearance="secondary"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prevPage) => prevPage - 1)}
+                >
+                  Previous
+                </Button>
+                <Text size={200} className={styles.paginationInfo}>
+                  Page {currentPage} of {totalPages}
+                </Text>
+                <Button
+                  size="small"
+                  appearance="secondary"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prevPage) => prevPage + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           )}
         </div>
 

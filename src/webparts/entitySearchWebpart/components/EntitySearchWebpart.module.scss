@@ -64,6 +64,28 @@ $sp-white:             #ffffff;
   background: $sp-white;
 }
 
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid $sp-neutralLight;
+  background: $sp-neutralLighterAlt;
+}
+
+.paginationButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.paginationInfo {
+  color: $sp-neutralSecondary;
+  font-size: 12px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
 .listHeader {
   display: flex;
   align-items: center;
